@@ -1,10 +1,12 @@
 import Phaser from "phaser";
-
-let fpsText: Phaser.GameObjects.Text;
-let bird: Phaser.Physics.Arcade.Sprite;
-let totalDelta = 0;
+import { createFpsText, updateFpsText } from "./store";
+// let totalDelta = 0;
 
 const { log } = console;
+
+let bird: Phaser.Physics.Arcade.Sprite | null;
+
+const DEFAULT_VELOCITY = 200
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -12,39 +14,45 @@ const config: Phaser.Types.Core.GameConfig = {
   height: 600,
   physics: {
     default: "arcade",
+
     arcade: {
-      gravity: { y: 200 },
+      // gravity: { y: 200 },
+      debug: true,
+
     },
   },
-  scene: {
-    preload(this: Phaser.Scene) {
-      this.load.image("sky", "assets/sky.png");
-      this.load.image("bird", "assets/bird.png");
-    },
-    create(this: Phaser.Scene) {
-      fpsText = this.add
-        .text(10, 10, "", {
-          fontSize: "16px",
-          color: "#00ff00",
-          fontFamily: "Segoe UI",
-        })
-        .setDepth(999);
-
-      this.add.image(0, 0, "sky").setOrigin(0, 0);
-      const { cx, cy } = getCenter();
-      bird = this.physics.add.sprite(cx, cy, "bird");
-      bird.setVelocityY(100);
-      bird.setGravity(0, 200);
-      console.log(bird.body);
-    },
-    update(this: Phaser.Scene, time: number, delta: number) {
-      fpsText.setText(`FPS: ${Math.floor(this.game.loop.actualFps)}`);
-
-      totalDelta += delta;
-      log(totalDelta);
-    },
-  },
+  scene: { preload, create, update, },
 };
+
+function preload(this: Phaser.Scene) {
+  this.load.image("sky", "assets/sky.png");
+  this.load.image("bird", "assets/bird.png");
+}
+
+function create(this: Phaser.Scene) {
+  createFpsText(this);
+
+  this.add.image(0, 0, "sky").setOrigin(0, 0);
+
+  const { cx, cy } = getCenter();
+  bird = this.physics.add.sprite(cx, cy, "bird");
+  bird.setVelocityX(DEFAULT_VELOCITY);
+  // bird.setGravity(0, 200);
+  console.log(bird.body);
+}
+
+function update(this: Phaser.Scene, time: number, delta: number) {
+  updateFpsText(this);
+  const body = bird?.body as Phaser.Physics.Arcade.Body;
+
+  if (body.right >= (config.width as number)) {
+    bird?.setVelocityX(-DEFAULT_VELOCITY);
+  } else if (body.left <= 0) {
+    bird?.setVelocityX(DEFAULT_VELOCITY);
+  }
+  // totalDelta += delta;
+  // log(totalDelta);
+}
 
 const getCenter = () => {
   return {
