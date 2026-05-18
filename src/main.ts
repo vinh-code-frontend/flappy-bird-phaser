@@ -4,9 +4,12 @@ import { createFpsText, updateFpsText } from "./store";
 
 const { log } = console;
 
-let bird: Phaser.Physics.Arcade.Sprite | null;
 
 const DEFAULT_VELOCITY = 200
+const DEFAULT_GRAVITY = 200
+
+let flapVelocity = 150
+let bird: Phaser.Physics.Arcade.Sprite | null;
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -16,7 +19,7 @@ const config: Phaser.Types.Core.GameConfig = {
     default: "arcade",
 
     arcade: {
-      // gravity: { y: 200 },
+      gravity: { y: 400 },
       debug: true,
 
     },
@@ -36,24 +39,39 @@ function create(this: Phaser.Scene) {
 
   const { cx, cy } = getCenter();
   bird = this.physics.add.sprite(cx, cy, "bird");
-  bird.setVelocityX(DEFAULT_VELOCITY);
-  // bird.setGravity(0, 200);
+
   console.log(bird.body);
+
+  this.input.on('pointerdown', flap)
+
+  this.input.keyboard.on('keydown-SPACE ', flap)
 }
 
 function update(this: Phaser.Scene, time: number, delta: number) {
   updateFpsText(this);
   const body = bird?.body as Phaser.Physics.Arcade.Body;
+  console.log({ y: body.velocity.y })
+  const y = body.y
 
-  if (body.right >= (config.width as number)) {
-    bird?.setVelocityX(-DEFAULT_VELOCITY);
-  } else if (body.left <= 0) {
-    bird?.setVelocityX(DEFAULT_VELOCITY);
+  if (y <= 0 || y >= 600) {
+    const { cx, cy } = getCenter();
+    bird?.setPosition(cx, cy)
+    bird?.setVelocityY(0)
+    // alert('oh shit')
   }
+
+  // if (body.right >= (config.width as number)) {
+  //   bird?.setVelocityX(-DEFAULT_VELOCITY);
+  // } else if (body.left <= 0) {
+  //   bird?.setVelocityX(DEFAULT_VELOCITY);
+  // }
   // totalDelta += delta;
   // log(totalDelta);
 }
 
+function flap() {
+  bird?.setVelocityY(-flapVelocity)
+}
 const getCenter = () => {
   return {
     cx: typeof config.width === "number" ? config.width / 2 : 0,
